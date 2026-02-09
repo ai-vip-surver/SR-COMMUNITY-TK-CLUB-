@@ -1,412 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SR COMMUNITY</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SR COMMUNITY</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Consolas', monospace; }
+        #game-frame { width: 100%; height: 100vh; border: none; }
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Rajdhani',sans-serif;}
-body,html{height:100%;width:100%;background:#000;overflow:hidden;}
+        /* FIXED RECTANGULAR RGB HACKER BOX */
+        #signal-box {
+            position: absolute; 
+            top: 15%; 
+            left: 50%; 
+            transform: translateX(-50%);
+            width: 180px; 
+            background: #000; /* Solid background to ensure visibility */
+            border-radius: 8px;
+            color: #fff; 
+            z-index: 9999; 
+            cursor: move; 
+            padding: 15px;
+            text-align: center; 
+            user-select: none;
+            touch-action: none;
+            overflow: hidden;
+            
+            /* RGB Border using a simple solid border + animation */
+            border: 3px solid #ff0000;
+            animation: rgb-border-simple 5s linear infinite;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
 
-/* ================= PANEL ================= */
+        /* Simple RGB Border Animation */
+        @keyframes rgb-border-simple {
+            0% { border-color: #ff0000; box-shadow: 0 0 15px #ff0000; }
+            20% { border-color: #ffff00; box-shadow: 0 0 15px #ffff00; }
+            40% { border-color: #00ff00; box-shadow: 0 0 15px #00ff00; }
+            60% { border-color: #00ffff; box-shadow: 0 0 15px #00ffff; }
+            80% { border-color: #0000ff; box-shadow: 0 0 15px #0000ff; }
+            100% { border-color: #ff00ff; box-shadow: 0 0 15px #ff00ff; }
+        }
 
-#pnl{
-position:fixed;
-top:0;
-left:50%;
-transform:translateX(-50%);
-width:100%;
-max-width:480px;
-background:#050505;
-padding:15px;
-z-index:9999;
-text-align:center;
-border:3px solid red;
-animation:rgbBorder 4s linear infinite;
-backdrop-filter:blur(15px);
-}
+        /* HACKING SCAN LINE ANIMATION */
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #00ff00;
+            box-shadow: 0 0 20px 2px #00ff00;
+            z-index: 10000;
+            pointer-events: none;
+            animation: scan-move 2s linear infinite;
+        }
 
-/* iframe এখন panel এর নিচ থেকে শুরু হবে */
-iframe{
-position:fixed;
-top:220px;   /* panel height অনুযায়ী নিচে নামানো হয়েছে */
-left:0;
-width:100%;
-height:calc(100% - 220px);
-border:none;
-z-index:1;
-background:#000;
-}
+        @keyframes scan-move {
+            0% { top: -5%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 105%; opacity: 0; }
+        }
 
-/* ================= RGB ================= */
+        .header { 
+            font-weight: 900; font-size: 13px; letter-spacing: 1px; 
+            margin-bottom: 12px; color: #fff; 
+            text-shadow: 1px 1px 2px #000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 8px;
+        }
+        
+        #hack-content { display: none; }
 
-@keyframes rgbBorder{
-0%{border-color:#ff0000;box-shadow:0 0 20px #ff0000;}
-25%{border-color:#00ff00;box-shadow:0 0 20px #00ff00;}
-50%{border-color:#00ffff;box-shadow:0 0 20px #00ffff;}
-75%{border-color:#ff00ff;box-shadow:0 0 20px #ff00ff;}
-100%{border-color:#ff0000;box-shadow:0 0 20px #ff0000;}
-}
+        .res-container { 
+            background: rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            padding: 10px; border-radius: 6px; margin-bottom: 10px;
+        }
+        
+        .label { font-size: 9px; color: #ffff00; text-transform: uppercase; margin-bottom: 5px; }
+        .value { font-size: 24px; font-weight: 900; line-height: 1; margin: 8px 0; }
+        
+        .lucky-nums {
+            font-size: 14px; font-weight: bold; color: #00ff00;
+        }
 
-@keyframes rgbText{
-0%{color:#ff0000;text-shadow:0 0 8px #ff0000;}
-25%{color:#00ff00;text-shadow:0 0 8px #00ff00;}
-50%{color:#00ffff;text-shadow:0 0 8px #00ffff;}
-75%{color:#ff00ff;text-shadow:0 0 8px #ff00ff;}
-100%{color:#ff0000;text-shadow:0 0 8px #ff0000;}
-}
+        .timer { font-size: 11px; color: #fff; margin-bottom: 10px; }
+        #seconds { color: #ff0000; font-weight: bold; }
 
-.header{
-font-size:14px;
-font-weight:900;
-text-transform:uppercase;
-margin-bottom:10px;
-animation:rgbText 4s linear infinite;
-}
+        /* Buttons and Inputs */
+        .add-btn {
+            display: block; padding: 8px;
+            background: #ff0000; color: #fff;
+            text-decoration: none; font-size: 10px; font-weight: 900;
+            border-radius: 4px; text-transform: uppercase;
+        }
 
-.switch-grid{
-display:flex;
-gap:5px;
-margin-bottom:10px;
-}
-
-.sw{
-flex:1;
-padding:8px;
-border-radius:8px;
-background:#111;
-border:1px solid #333;
-color:#fff;
-font-size:10px;
-cursor:pointer;
-}
-
-.active-sw{
-background:#fff;
-color:#000;
-font-weight:bold;
-}
-
-.box-container{
-display:flex;
-gap:8px;
-margin-bottom:10px;
-}
-
-.sig-box{
-flex:1;
-padding:8px;
-border-radius:12px;
-background:#0a0a0a;
-border:2px solid #222;
-animation:rgbBorder 5s linear infinite;
-}
-
-.label{
-font-size:8px;
-display:block;
-margin-bottom:4px;
-opacity:0.7;
-}
-
-#res-bs,#res-cr,#res-num{
-font-weight:900;
-animation:rgbText 3s linear infinite;
-}
-
-#res-num{font-size:22px;}
-
-.bottom-row{
-display:flex;
-gap:10px;
-align-items:center;
-}
-
-.get-btn{
-flex:2;
-padding:12px;
-border:none;
-border-radius:12px;
-font-weight:900;
-cursor:pointer;
-background:#111;
-color:#fff;
-animation:rgbBorder 4s linear infinite;
-}
-
-.get-btn:disabled{
-opacity:0.4;
-}
-
-.timer-wrap{
-flex:1;
-padding:6px;
-border-radius:10px;
-border:2px solid #222;
-animation:rgbBorder 4s linear infinite;
-}
-
-#tm{
-font-size:18px;
-font-weight:bold;
-animation:rgbText 3s linear infinite;
-}
-
-/* ================= LOGIN ================= */
-
-#lgn{
-position:fixed;
-inset:0;
-background: #000; /* Black background for login page */
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-z-index:10001;
-}
-
-.login-box {
-width: 90%;
-max-width: 350px;
-background: rgba(255, 255, 255, 0.05);
-backdrop-filter: blur(20px);
-border: 2px solid rgba(255, 255, 255, 0.1);
-border-radius: 30px;
-padding: 40px 30px;
-text-align: center;
-box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
-animation: boxEntrance 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes boxEntrance {
-0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
-100% { opacity: 1; transform: scale(1) rotate(0deg); }
-}
-
-.profile-img {
-width: 110px;
-height: 110px;
-border-radius: 50%;
-border: 4px solid #fff;
-margin-bottom: 20px;
-object-fit: cover;
-box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-animation: imgFloat 3s ease-in-out infinite;
-}
-
-@keyframes imgFloat {
-0%, 100% { transform: translateY(0); }
-50% { transform: translateY(-10px); }
-}
-
-.login-title {
-color: #fff;
-font-size: 22px;
-font-weight: 900;
-margin-bottom: 25px;
-text-transform: uppercase;
-letter-spacing: 2px;
-animation: glowText 2s ease-in-out infinite alternate;
-}
-
-@keyframes glowText {
-from { text-shadow: 0 0 5px #fff, 0 0 10px #fff; }
-to { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff; }
-}
-
-#ps{
-width: 100%;
-font-size: 18px;
-padding: 15px;
-background: rgba(255, 255, 255, 0.05);
-border: 1px solid rgba(255, 255, 255, 0.2);
-color: #fff;
-border-radius: 15px;
-margin-bottom: 20px;
-text-align: center;
-outline: none;
-transition: 0.4s;
-}
-
-#ps:focus {
-border-color: #fff;
-background: rgba(255, 255, 255, 0.15);
-box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-}
-
-.login-btn {
-width: 100%;
-padding: 15px;
-background: #fff;
-color: #000;
-border: none;
-border-radius: 15px;
-font-weight: 900;
-font-size: 18px;
-cursor: pointer;
-transition: 0.3s;
-margin-bottom: 20px;
-text-transform: uppercase;
-}
-
-.login-btn:hover {
-transform: translateY(-3px);
-box-shadow: 0 5px 15px rgba(255, 255, 255, 0.4);
-}
-
-.tg-btn {
-display: block;
-width: 100%;
-padding: 14px;
-background: rgba(0, 136, 204, 0.1);
-color: #0088cc;
-border: 2px solid #0088cc;
-border-radius: 15px;
-font-weight: 900;
-font-size: 15px;
-text-decoration: none;
-transition: 0.3s;
-animation: pulseTG 2s infinite;
-text-transform: uppercase;
-}
-
-@keyframes pulseTG {
-0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 136, 204, 0.4); }
-70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(0, 136, 204, 0); }
-100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 136, 204, 0); }
-}
-
-.tg-btn:hover {
-background: #0088cc;
-color: #fff;
-}
-
-</style>
+        #login-section input {
+            width: 85%; padding: 8px; margin-bottom: 10px; background: #111; 
+            border: 1px solid #444; color: #fff; text-align: center; border-radius: 4px; 
+            outline: none; font-size: 11px;
+        }
+        .login-btn { 
+            background: #00ff00; color: #000; border: none; padding: 10px; 
+            cursor: pointer; font-weight: 900; width: 100%; border-radius: 4px; font-size: 10px;
+            text-transform: uppercase;
+        }
+    </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-<div id="lgn">
-    <div class="login-box">
-        <img src="https://iili.io/fpw36zP.md.jpg" alt="Profile" class="profile-img">
-        <div class="login-title">SR COMMUNITY</div>
-        <input type="password" id="ps" placeholder="ENTER VIP PIN">
-        <button class="login-btn" onclick="login()">LOGIN</button>
-        <a href="https://t.me/TRADER_2BROTHERS" target="_blank" class="tg-btn">JOIN TELEGRAM</a>
-    </div>
-</div>
+    <iframe id="game-frame" src="https://tkclub2.com/#/register?invitationCode=67313217616"></iframe>
 
-<div id="pnl">
-    <div id="mc" style="display:none;">
+    <div id="signal-box">
+        <div class="scan-line"></div>
+        
         <div class="header">SR COMMUNITY</div>
         
-        <div class="switch-grid">
-            <div id="sw30" class="sw" onclick="setM(30)">30S</div>
-            <div id="sw60" class="sw active-sw" onclick="setM(60)">1M</div>
-            <div id="sw180" class="sw" onclick="setM(180)">3M</div>
-            <div id="sw300" class="sw" onclick="setM(300)">5M</div>
+        <div id="login-section">
+            <input type="password" id="passInput" placeholder="ENTER KEY">
+            <button class="login-btn" onclick="checkAccess()">START</button>
         </div>
-        
-        <div class="box-container">
-            <div class="sig-box"><span class="label">SIZE</span><div id="res-bs">WAIT</div></div>
-            <div class="sig-box"><span class="label">COLOR</span><div id="res-cr">WAIT</div></div>
-            <div class="sig-box"><span class="label">NUMBER</span><div id="res-num">--</div></div>
-        </div>
-        
-        <div class="bottom-row">
-            <button class="get-btn" id="mainBtn" onclick="getSignal()">GET SURE SHOT 🔥</button>
-            <div class="timer-wrap">
-                <span id="tm">00:00</span>
+
+        <div id="hack-content">
+            <div class="res-container">
+                <div class="label">PREDICTION</div>
+                <div id="predict-res" class="value">...</div>
+                <div class="lucky-nums" id="lucky-pair">-- & --</div>
             </div>
+
+            <div class="timer">NEXT: <span id="seconds">30</span>s</div>
+            
+            <a href="https://t.me/TRADER_2BROTHERS" class="add-btn">TELEGRAM</a>
         </div>
     </div>
-</div>
 
-<!-- iframe শুধুমাত্র মেইন প্যানেলে থাকবে, লগইন পেজে নয় -->
-<iframe src="https://tkclub2.com/#/register?invitationCode=67313217616"></iframe>
+    <script>
+        // --- DRAG AND DROP LOGIC ---
+        const box = document.getElementById('signal-box');
+        let isDragging = false;
+        let offsetX, offsetY;
 
-<script>
-let mode=60;
-let lockedPeriods={30:-1,60:-1,180:-1,300:-1};
-let storedSignals={30:null,60:null,180:null,300:null};
+        const startDrag = (e) => {
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+            isDragging = true;
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            offsetX = clientX - box.offsetLeft;
+            offsetY = clientY - box.offsetTop;
+            box.style.transform = 'none';
+        };
 
-function login(){
-    if(document.getElementById('ps').value.trim()==="APURBO1X"){
-        document.getElementById('lgn').style.display='none';
-        document.getElementById('mc').style.display='block';
-        startTimer();
-    }else{
-        alert("WRONG PIN!");
-    }
-}
+        const doDrag = (e) => {
+            if (!isDragging) return;
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            box.style.left = (clientX - offsetX) + 'px';
+            box.style.top = (clientY - offsetY) + 'px';
+        };
 
-function setM(m){
-    mode=m;
-    document.querySelectorAll('.sw').forEach(s=>s.classList.remove('active-sw'));
-    document.getElementById('sw'+m).classList.add('active-sw');
-    checkLock();
-}
+        box.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', () => isDragging = false);
+        box.addEventListener('touchstart', startDrag, {passive: false});
+        document.addEventListener('touchmove', doDrag, {passive: false});
+        document.addEventListener('touchend', () => isDragging = false);
 
-function checkLock(){
-    let now=new Date();
-    let periodId=Math.floor(now.getTime()/(mode*1000));
-    const btn=document.getElementById('mainBtn');
-    if(lockedPeriods[mode]===periodId){
-        btn.disabled=true;
-        btn.innerText="LOCKED 🔒";
-        showStoredSignal();
-    }else{
-        btn.disabled=false;
-        btn.innerText="GET SURE SHOT 🔥";
-        resetDisplay();
-    }
-}
-
-function getSignal(){
-    let now=new Date();
-    let periodId=Math.floor(now.getTime()/(mode*1000));
-    let seed=periodId*9301+49297;
-    let value=Math.abs(seed%100000);
-    let number=value%10;
-    let size=(number>=5)?"BIG":"SMALL";
-    let color=(number%2===0)?"RED":"GREEN";
-    
-    storedSignals[mode]={bs:size,cr:color,num:number};
-    lockedPeriods[mode]=periodId;
-    showStoredSignal();
-    checkLock();
-}
-
-function showStoredSignal(){
-    let sig=storedSignals[mode];
-    if(sig){
-        document.getElementById('res-bs').innerText=sig.bs;
-        document.getElementById('res-cr').innerText=sig.cr;
-        document.getElementById('res-num').innerText=sig.num;
-    }
-}
-
-function resetDisplay(){
-    document.getElementById('res-bs').innerText="WAIT";
-    document.getElementById('res-cr').innerText="WAIT";
-    document.getElementById('res-num').innerText="--";
-}
-
-function startTimer(){
-    setInterval(function(){
-        let s=Math.floor(new Date().getTime()/1000);
-        let r=mode-(s%mode);
-        let m=Math.floor(r/60);
-        let sec=r%60;
-        document.getElementById('tm').innerText=
-        (m<10?"0"+m:m)+":"+(sec<10?"0"+sec:sec);
-        if(r===mode){
-            lockedPeriods[mode]=-1;
-            checkLock();
+        // --- PREDICTION ENGINE ---
+        function checkAccess() {
+            if(document.getElementById('passInput').value === "APURBO1X") { 
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('hack-content').style.display = 'block';
+                startHack();
+            } else { alert("WRONG KEY"); }
         }
-    },1000);
-}
-</script>
 
+        function startHack() {
+            const list = ["BIG 7,9", "SMALL 0,2", "SMALL 1,3", "BIG 6,8", "BIG 5,9", "SMALL 2,4"];
+            
+            setInterval(() => {
+                const now = new Date();
+                const ms = now.getTime();
+                
+                let p = Math.floor(ms / 30000);
+                let seed = p * 1.234;
+                let idx = Math.floor(Math.abs(Math.sin(seed) * list.length)) % list.length;
+                
+                let resultData = list[idx].split(' '); 
+                let resultText = resultData[0];
+                let luckyNums = resultData[1];
+
+                const resEl = document.getElementById('predict-res');
+                resEl.innerText = resultText;
+                resEl.style.color = resultText === "BIG" ? "#00ffff" : "#ff00ff";
+                document.getElementById('lucky-pair').innerText = luckyNums;
+
+                const totalSec = now.getSeconds();
+                const remaining = totalSec >= 30 ? 60 - totalSec : 30 - totalSec;
+                document.getElementById('seconds').innerText = remaining;
+
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
